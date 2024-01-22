@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
+
+<!--
+  * plugins/oaiMetadataFormats/biblat/version.xml
+  *
+  * Copyright (c) 2022 UNAM-DGBSDI
+  * Copyright (c) 2022 Edgar Durán
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+  *
+  * Plugin version information.
+  -->
+<version>
+	<application>biblat</application>
+	<type>plugins.oaiMetadataFormats</type>
+	<release>2.0.0.0</release>
+	<date>2024-01-01</date>
+</version>
