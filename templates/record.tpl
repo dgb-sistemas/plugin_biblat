@@ -16,10 +16,11 @@
         
         {if $version}
         <varfield id="000" i1="#" i2="#">
-            <subfield label="i">3.0.0v2.0</subfield>
+            <subfield label="i">3.1.2v2.0</subfield>
             <subfield label="v">{$version}</subfield>
 	</varfield>
         {/if}
+        
 	<varfield id="008" i1="#" i2="#">
 		<subfield label="e">{$address|escape}</subfield>
 	</varfield>
@@ -41,24 +42,19 @@
 			<subfield label="a">{$language}</subfield>
 		</varfield>
 	{/if}
-	
+	{$prueba_c}
 	{assign var=authors value=$article->getAuthors()}
-	
 	{foreach from=$authors item=author key=key}
-		{if $author->getSuffix() == "AC"}
-
-		{else}
 			<varfield id="100" i1="#" i2="#">
-				<subfield label="a">{$author->getFullName(true)|escape}</subfield>
-				{**assign var=affiliation value=$author->getAffiliation($journal->getPrimaryLocale())**}				
+				<subfield label="a">{$author->getFullName(false,true)|escape}</subfield>
+				{**assign var=affiliation value=$author->getAffiliation($journal->getPrimaryLocale())**}
 				{if $author->getEmail()}<subfield label="6">{$author->getEmail()|escape}</subfield>{/if}
 				{if $author->getUrl()}<subfield label="0">{$author->getUrl()|escape}</subfield>{/if}
 				{if $author->getData('orcid')}<subfield label="0">{$author->getData('orcid')|escape}</subfield>{/if}
-				{if $author->getSuffix()}<subfield label="0">{$author->getSuffix()|escape}</subfield>{/if}
 				{if strlen($affiliation) != 0 or strlen($art_authors[$key].country) != 0}
 					<varfield id="120" i1="#" i2="#">
-						{if strlen($art_authors[$key].institution) == 0}
-								{if $affiliation} <subfield label="u">{$affiliation|escape}</subfield>{/if}
+						{if strlen($art_authors[$key].institution) == 0} {/if}
+								{if $affiliation} <subfield label="u">{$affiliation|escape}</subfield>
 								{if $art_authors[$key].country} <subfield label="x">{$art_authors[$key].country|escape}</subfield> {/if}
 						{* elseif $art_authors[$key].institution or $art_authors[$key].dependencia or $art_authors[$key].ciudad or $art_authors[$key].country *}
 						{else}
@@ -70,7 +66,6 @@
 					</varfield>
 				{/if}
 			</varfield>
-		{/if}
 	{/foreach}
 	
 	{foreach name=art_author from=$art_authors_ac item=auth}
@@ -138,8 +133,9 @@
 		</varfield>
 	{/if}
 	
-	{if $art_ident[0].vol or $art_ident[0].num or $art_ident[0].mes or $art_ident[0].parte or $article->getPages()}
+	{if $art_ident[0].vol or $art_ident[0].num or $art_ident[0].mes or $art_ident[0].parte or $article->getPages() or $ident}
 		<varfield id="300" i1="#" i2="#">
+                        {if $ident} <subfield label="0">{$ident|escape}</subfield> {/if}
 			{if $art_ident[0].vol} <subfield label="a">V{$art_ident[0].vol|escape}</subfield> {/if}
 			{if $art_ident[0].num} <subfield label="b">N{$art_ident[0].num|escape}</subfield> {/if}
 			{if $art_issue[0].mes} <subfield label="c">{$art_issue[0].mes|escape}</subfield> {/if}
@@ -236,11 +232,11 @@
 			<subfield label="a">{$article->getCoverage($journal->getPrimaryLocale())|escape}</subfield>
 		</varfield>
 	{/if}
-        
-        {if $error}
-            <varfield id="err" i1=" " i2=" ">
-            {$error}
-            </varfield>
-        {/if} 
+	
+	{if $error}
+		<varfield id="err" i1=" " i2=" ">
+		{$error}
+		</varfield>
+	{/if}
 
 </oai_biblat>
