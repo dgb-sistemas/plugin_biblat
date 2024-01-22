@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
+
+<!--
+  * plugins/oaiMetadataFormats/biblat/locale/es_ES/locale.xml
+  *
+  * Localization information: https://pkp.sfu.ca/wiki/index.php?title=OJS:_Spanish_(es_ES)
+  * Localization strings.
+  -->
+ 
+<locale name="es_ES" full_name="Español (Argentina)">
+	<message key="plugins.OAIMetadata.biblat.displayName">Formato BIBLAT de Metadatos v2.0</message>
+	<message key="plugins.OAIMetadata.biblat.description">Estructura los metadatos de forma que son consistentes con el formato MARC BIBLAT.</message>
+</locale>
