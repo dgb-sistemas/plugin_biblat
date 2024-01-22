@@ -93,7 +93,6 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		if( $this->version >= 7){
 		
 			try{
-		
 				$sql = "create table if not exists biblat(val int)";
 				$result = $sub->update($sql);
 				
@@ -276,7 +275,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 	
 	function getRecords(){
 		#				0		1				2					3				4					5					6				7			8				9								10				11					12					13
-		$tablas = ['issues', 'journals', 'journal_settings', 'submissions', 'publications', 'publication_settings', 'issue_settings', 'authors', 'author_settings', 'controlled_vocab_entry_settings', 'sections', 'section_settings', 'publication_galleys', 'publication_galleys pg inner join submission_files sf on pg.file_id = sf.file_id', 'count'];
+		$tablas = ['issues', 'journals', 'journal_settings', 'submissions', 'publications', 'publication_settings', 'issue_settings', 'authors', 'author_settings', 'controlled_vocab_entry_settings', 'sections', 'section_settings', 'publication_galleys', 'files f inner join submission_files sf on f.file_id = sf.file_id', 'count'];
 		
 		$sel_journal_id = " (select journal_id from journals where path = '".$this->path."') ";
 		#			0
@@ -284,7 +283,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		#			1
 					" where path = '".$this->path."' ",
 		#			2
-                    " where setting_name in ('title', 'name', 'journal_id', 'supportedFormLocales', 'supportedLocales', 'supportedSubmissionLocales', 'printIssn', 'onlineIssn', 'publisherInstitution') and journal_id = ".$sel_journal_id."",
+                    " where setting_name not in ('emailSignature', 'authorInformation', 'librarianInformation', 'privacyStatement', 'readerInformation', 'submissionChecklist', 'about') and journal_id = ".$sel_journal_id."",
 		#			3
                     " where current_publication_id in ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
 		#			4
@@ -306,7 +305,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		#			12
 					" where publication_id in  ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
 		#			13
-					" where publication_id in ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
+					" where f.file_id in (select file_id from submission_files where submission_file_id in ( select submission_file_id from publication_galleys where publication_id in  ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ) )",
 		#			14
 					" where year in (".$this->years.") and journal_id = ".$sel_journal_id." and published=1"
 				  ];
@@ -325,7 +324,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 					$this->msjError .= $e->getMessage();
 					//Error posible tabla en postgres
 					if($tabla == 'issues'){
-						$where_p = " where COALESCE(year, extract(year from date_published)) in (".$this->years.") and journal_id = ".$sel_journal_id." ";
+						$where_p = " where COALESCE(year, YEAR(date_published)) in (".$this->years.") and journal_id = ".$sel_journal_id." ";
 						$rows = $this->get_json($tabla, $where_p);
 					}else{
 						$rows = [];
@@ -337,7 +336,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 				} catch (Exception $e) {
 					$this->msjError .= $e->getMessage();
 					if($tabla == 'issues'){
-						$where_p = " where COALESCE(year, extract(year from date_published)) in (".$this->years.") and journal_id = ".$sel_journal_id." ";
+						$where_p = " where COALESCE(year, YEAR(date_published)) in (".$this->years.") and journal_id = ".$sel_journal_id." ";
 						$rows = $this->get_json($tabla, $where_p);
 					}else{
 						$rows = [];

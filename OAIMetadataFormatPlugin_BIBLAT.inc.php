@@ -56,7 +56,7 @@ class OAIMetadataFormatPlugin_BIBLAT extends OAIMetadataFormatPlugin {
 	}
 
 	static function getNamespace() {
-		return 'oai_biblat_320v20';
+		return 'oai_biblat_330v20';
 	}
 }
 

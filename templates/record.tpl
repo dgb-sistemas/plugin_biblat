@@ -15,7 +15,7 @@
 	{/if}
         {if $version}
         <varfield id="000" i1="#" i2="#">
-            <subfield label="i">3.2.0v2.0</subfield>
+            <subfield label="i">3.3.0v2.0</subfield>
             <subfield label="v">{$version}</subfield>
 	</varfield>
         {/if}
