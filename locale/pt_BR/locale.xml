@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
-
-<locale name="pt_BR" full_name="Português (Brasil)">
-	<message key="plugins.OAIMetadata.biblat.displayName">Formato BIBLAT de Metadatos v2.0</message>
-	<message key="plugins.OAIMetadata.biblat.description">Estructura los metadatos de forma que son consistentes con el formato BIBLAT.</message>
-</locale>

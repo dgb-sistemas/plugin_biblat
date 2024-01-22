@@ -13,10 +13,9 @@
 	{if $article->getDatePublished()}
 		<fixfield id="008">"{$article->getDatePublished()|strtotime|date_format:"%y%m%d %Y"}                        eng  "</fixfield>
 	{/if}
-        
         {if $version}
         <varfield id="000" i1="#" i2="#">
-            <subfield label="i">3.1.2v2.0</subfield>
+            <subfield label="i">3.2.0v2.0</subfield>
             <subfield label="v">{$version}</subfield>
 	</varfield>
         {/if}
@@ -42,19 +41,19 @@
 			<subfield label="a">{$language}</subfield>
 		</varfield>
 	{/if}
-	{$prueba_c}
+	
 	{assign var=authors value=$article->getAuthors()}
 	{foreach from=$authors item=author key=key}
 			<varfield id="100" i1="#" i2="#">
 				<subfield label="a">{$author->getFullName(false,true)|escape}</subfield>
-				{**assign var=affiliation value=$author->getAffiliation($journal->getPrimaryLocale())**}
+				{**assign var=affiliation value=$author->getAffiliation($journal->getPrimaryLocale())**}				
 				{if $author->getEmail()}<subfield label="6">{$author->getEmail()|escape}</subfield>{/if}
 				{if $author->getUrl()}<subfield label="0">{$author->getUrl()|escape}</subfield>{/if}
 				{if $author->getData('orcid')}<subfield label="0">{$author->getData('orcid')|escape}</subfield>{/if}
 				{if strlen($affiliation) != 0 or strlen($art_authors[$key].country) != 0}
 					<varfield id="120" i1="#" i2="#">
-						{if strlen($art_authors[$key].institution) == 0} {/if}
-								{if $affiliation} <subfield label="u">{$affiliation|escape}</subfield>
+						{if strlen($art_authors[$key].institution) == 0}
+								{if $affiliation} <subfield label="u">{$affiliation|escape}</subfield> {/if}
 								{if $art_authors[$key].country} <subfield label="x">{$art_authors[$key].country|escape}</subfield> {/if}
 						{* elseif $art_authors[$key].institution or $art_authors[$key].dependencia or $art_authors[$key].ciudad or $art_authors[$key].country *}
 						{else}
@@ -87,42 +86,30 @@
 		</varfield>
 	{/if}
 	
-	{if $title[1] and $article->getLocale() <> 'en_US'}
+	{if $title['en_US'] and $article->getLocale() <> 'en_US'}
 		<varfield id="242" i1="#" i2="#">
-			<subfield label="a">{$title[1]|escape}</subfield>
+			<subfield label="a">{$title['en_US']|escape}</subfield>
 			<subfield label="y">eng</subfield>
 		</varfield>
 	{/if}
         
-	{if $title[0] and $article->getLocale() <> 'es_ES'}
+	{if $title['es_ES'] and $article->getLocale() <> 'es_ES'}
 		<varfield id="242" i1="#" i2="#">
-			<subfield label="a">{$title[0]|escape}</subfield>
-			<subfield label="y">esp</subfield>
+			<subfield label="a">{$title['es_ES']|escape}</subfield>
+			<subfield label="y">spa</subfield>
 		</varfield>
 	{/if}
         
-	{if $title[2] and $article->getLocale() <> 'pt_BR'}
+	{if $title['pt_BR'] and $article->getLocale() <> 'pt_BR'}
 		<varfield id="242" i1="#" i2="#">
-			<subfield label="a">{$title[2]|escape}</subfield>
+			<subfield label="a">{$title['pt_BR']|escape}</subfield>
 			<subfield label="y">por</subfield>
 		</varfield>
 	{/if}
-
-	{if $title[0] and $article->getLocale() == 'es_ES'}
+	
+	{if $title[$article->getLocale()]}
 		<varfield id="245" i1="#" i2="#">
-			<subfield label="a">{$title[0]|escape}</subfield>
-		</varfield>
-	{/if}
-        
-        {if $title[1] and $article->getLocale() == 'en_US'}
-		<varfield id="245" i1="#" i2="#">
-			<subfield label="a">{$title[1]|escape}</subfield>
-		</varfield>
-	{/if}
-        
-        {if $title[2] and $article->getLocale() == 'pt_BR'}
-		<varfield id="245" i1="#" i2="#">
-			<subfield label="a">{$title[2]|escape}</subfield>
+			<subfield label="a">{$title[$article->getLocale()]|escape}</subfield>
 		</varfield>
 	{/if}
 	
@@ -133,9 +120,8 @@
 		</varfield>
 	{/if}
 	
-	{if $art_ident[0].vol or $art_ident[0].num or $art_ident[0].mes or $art_ident[0].parte or $article->getPages() or $ident}
+	{if $art_ident[0].vol or $art_ident[0].num or $art_ident[0].mes or $art_ident[0].parte or $article->getPages()}
 		<varfield id="300" i1="#" i2="#">
-                        {if $ident} <subfield label="0">{$ident|escape}</subfield> {/if}
 			{if $art_ident[0].vol} <subfield label="a">V{$art_ident[0].vol|escape}</subfield> {/if}
 			{if $art_ident[0].num} <subfield label="b">N{$art_ident[0].num|escape}</subfield> {/if}
 			{if $art_issue[0].mes} <subfield label="c">{$art_issue[0].mes|escape}</subfield> {/if}
@@ -219,23 +205,31 @@
 		</varfield>
 	{/foreach}
 	
-	{if $records}
-		<varfield id="db" i1="#" i2="#">
-			{foreach from=$records item=record key=key}
-				<subfield label="{$record.tabla}">{$record.rows}</subfield>
-			{/foreach}
-		</varfield>
-    {/if}
 
 	{if $article->getCoverage($journal->getPrimaryLocale())}
 		<varfield id="500" i1=" " i2=" ">
 			<subfield label="a">{$article->getCoverage($journal->getPrimaryLocale())|escape}</subfield>
 		</varfield>
 	{/if}
+        
+        {if $min}
+            <varfield id="min" i1="#" i2="#">
+                {$min}
+            </varfield> 
+        {/if}
+	
+	{if $records}
+		<varfield id="db" i1="#" i2="#">
+		{foreach from=$records item=record key=key}
+			<subfield label="{$record['tabla']}">{$record['rows']}</subfield>
+		{/foreach}
+		{$records=""}
+		</varfield>
+	{/if}
 	
 	{if $error}
-		<varfield id="err" i1=" " i2=" ">
-		{$error}
+		<varfield id="err" i1="#" i2="#">
+			<subfield label="e">{$error}</subfield>
 		</varfield>
 	{/if}
 

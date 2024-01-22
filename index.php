@@ -17,4 +17,4 @@ require_once('OAIMetadataFormat_BIBLAT.inc.php');
 
 return new OAIMetadataFormatPlugin_BIBLAT();
 
-?>
+

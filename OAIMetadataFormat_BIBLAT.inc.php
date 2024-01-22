@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/oaiMetadataFormats/marc/OAIMetadataFormat_BIBLAT.inc.php
+ * @file plugins/oaiMetadataFormats/biblat/OAIMetadataFormat_BIBLAT.inc.php
  *
  * Copyright (c) 2021 UNAM-DGBSDI
  * Copyright (c) 2021 Edgar Durán
@@ -13,6 +13,8 @@
  *
  * @brief OAI metadata format class -- BIBLAT.
  */
+//error_reporting(E_ALL);
+error_reporting(0);
 class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 	public $records = null;
 	public $issues = null;
@@ -273,8 +275,8 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 	}
 	
 	function getRecords(){
-		#				0		1				2					3				4					5						6				7				8					9								10				11					12					13
-		$tablas = ['issues', 'journals', 'journal_settings', 'submissions', 'published_submissions', 'submission_settings', 'issue_settings', 'authors', 'author_settings', 'controlled_vocab_entry_settings', 'sections', 'section_settings', 'submission_galleys', 'submission_files', 'count'];
+		#				0		1				2					3				4					5					6				7			8				9								10				11					12					13
+		$tablas = ['issues', 'journals', 'journal_settings', 'submissions', 'publications', 'publication_settings', 'issue_settings', 'authors', 'author_settings', 'controlled_vocab_entry_settings', 'sections', 'section_settings', 'publication_galleys', 'publication_galleys pg inner join submission_files sf on pg.file_id = sf.file_id', 'count'];
 		
 		$sel_journal_id = " (select journal_id from journals where path = '".$this->path."') ";
 		#			0
@@ -282,36 +284,35 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		#			1
 					" where path = '".$this->path."' ",
 		#			2
-                    " where setting_name not in ('emailSignature', 'authorInformation', 'librarianInformation', 'readerInformation', 'submissionChecklist', 'about') and journal_id = ".$sel_journal_id."",
+                    " where setting_name in ('title', 'name', 'journal_id', 'supportedFormLocales', 'supportedLocales', 'supportedSubmissionLocales', 'printIssn', 'onlineIssn', 'publisherInstitution') and journal_id = ".$sel_journal_id."",
 		#			3
-                    " where submission_id in ( select submission_id from published_submissions where issue_id in ( <issue> ) ) ",
+                    " where current_publication_id in ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
 		#			4
-					" where issue_id in ( <issue> ) ",
+					" where publication_id in ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
 		#			5
-					" where submission_id in ( select submission_id from published_submissions where issue_id in ( <issue> ) ) ",
+					" where publication_id in ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
 		#			6
 					" where issue_id in ( <issue> ) ",
 		#			7
-					" where submission_id in ( select submission_id from published_submissions where issue_id in ( <issue> ) ) ",
+					" where publication_id in  ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
 		#			8
-					" where author_id in ( select author_id from authors where submission_id in ( select submission_id from published_submissions where issue_id in ( <issue> ) ) ) ",
+					" where author_id in ( select author_id from authors where publication_id in  ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ) ",
 		#			9
-					" c1 inner join controlled_vocab_entries c2 on c2.controlled_vocab_entry_id = c1.controlled_vocab_entry_id and c1.setting_name = 'submissionKeyword' inner join controlled_vocabs c3 on c3.controlled_vocab_id = c2.controlled_vocab_id where c3.symbolic in ( 'submissionKeyword', 'submissionDiscipline' ) and c3.assoc_id in ( select submission_id from published_submissions where issue_id in ( <issue> ) )",
+					" c1 inner join controlled_vocab_entries c2 on c2.controlled_vocab_entry_id = c1.controlled_vocab_entry_id and c1.setting_name = 'submissionKeyword' inner join controlled_vocabs c3 on c3.controlled_vocab_id = c2.controlled_vocab_id where c3.symbolic in ( 'submissionKeyword', 'submissionDiscipline' ) and c3.assoc_id in ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) )",
 		#			10
 					" where journal_id = ".$sel_journal_id." ",
 		#			11
-					" where section_id in ( select section_id from submissions where submission_id in ( select submission_id from published_submissions where issue_id in ( <issue> ) ) ) ",
+					" where section_id in ( select section_id from publications where publication_id in ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ) ",
 		#			12
-					" where submission_id in  ( select submission_id from published_submissions where issue_id in ( <issue> ) ) ",
+					" where publication_id in  ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
 		#			13
-					" where assoc_id in ( select published_submission_id from published_submissions where issue_id in ( <issue> ) )",
+					" where publication_id in ( select publication_id from publication_settings where setting_name = 'issueId' and setting_value in ( '<issue>' ) ) ",
 		#			14
 					" where year in (".$this->years.") and journal_id = ".$sel_journal_id." and published=1"
 				  ];
                 if($this->allYears){
                     $where[0] = " where journal_id = ".$sel_journal_id." ";
                 }
-		#			0	1		2	3		4	5		6	7		8	 9			10	11		12		13
 		$abrev = ['i', 'j', 'j_s', 'ss', 'p', 'p_s', 'i_s', 'a', 'a_s', 'c_v_e_s', 's', 's_s', 'p_g', 'p_f', 'num'];
 		$result_tablas = array();
 		$i=0;
@@ -348,7 +349,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		}
 		return $result_tablas;
 	}
-	
+
 	/**
 	 * @see OAIMetadataFormat#toXml
 	 */
@@ -359,33 +360,55 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
                 $version= file_get_contents("dbscripts/xml/version.xml");
 		
 		$submissionKeywordDao = DAORegistry::getDAO('SubmissionKeywordDAO');
-                if( array_shift(array_shift($submissionKeywordDao->getKeywords($article->getId(), array('es_ES')))) )
-			$keywords = $submissionKeywordDao->getKeywords($article->getId(), array('es_ES'));
-                if(!isset($keywords)){
-                    if( array_shift(array_shift($submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale())))) )
-			$keywords = $submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale()));
-                }
-		if( array_shift(array_shift($submissionKeywordDao->getKeywords($article->getId(), array('en_US')))) )
-			$keywordsUS = $submissionKeywordDao->getKeywords($article->getId(), array('en_US'));
+		$as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array('es_ES')));
+		
+		$keywords = array();
+		if( !is_null($as1) ){							 
+			if( array_shift($as1) )
+				$keywords = $submissionKeywordDao->getKeywords($article->getId(), array('es_ES'));
+		}
+        if(!isset($keywords)){
+			$as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale())));
+			if( !is_null($as1) ){							 
+				if( array_shift($as1) )
+					$keywords = $submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale()));
+			}
+        }
+		
+		$keywordsUS = array();
+		$as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array('en_US')));
+		if( !is_null($as1) ){							 
+			if( array_shift($as1) )
+				$keywordsUS = $submissionKeywordDao->getKeywords($article->getId(), array('en_US'));
+		}
 		
 		$submissionDisciplineDao = DAORegistry::getDAO('SubmissionDisciplineDAO');
 		
-		if( array_shift(array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES')))) )
-			$disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES'));
-                if(!isset($disciplines)){
-                    if( array_shift(array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale())))) )
-			$disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale()));
-                }
+		$disciplines = array();
+		$as1 = array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES')));
+		if( !is_null($as1) ){
+			if( array_shift($as1) )
+				$disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES'));
+		}
+        if(!isset($disciplines)){
+			$as1 = array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale())));
+			if( !is_null($as1) ){
+				if( array_shift($as1) )
+					$disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale()));
+			}
+        }
 		
-                       
-                $pais = DAORegistry::getDAO('CountryDAO')->getCountries();
+		$pais = DAORegistry::getDAO('CountryDAO')->getCountries();
                 
 		$meses = array(	'enero' => 'ene', 'febrero' => 'feb', 'marzo' => 'mar', 'abril' => 'abr', 'mayo' => 'may', 'junio' => 'jun',
 						'julio' => 'jul', 'agosto' => 'ago', 'septiembre' => 'sep', 'octubre' => 'oct', 'noviembre' => 'nov', 'diciembre' => 'dic'
 		);
 		$idiomas = array('spa' => 'Español', 'eng' => 'Inglés', 'es' => 'Español', 'en' => 'Inglés', 'ita' => 'Italiano', 'fra' => 'Francés', 'por' => 'Portugués');
 		
-		$address = trim(explode(";", explode("País:", $journal->getSetting('mailingAddress'))[1])[0]);
+		$address = '';
+		$exp_pais = explode("País:", $journal->getSetting('mailingAddress'));
+		if( isset($exp_pais[1]) )
+			$address = trim(explode(";", explode("País:", $journal->getSetting('mailingAddress'))[1])[0]);
 		
 		$art_authors_ac = array();
 		$art_authors = array();
@@ -405,10 +428,26 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
                                 if(strlen($affiliation) == 0){
                                     $affiliation = $author->getAffiliation($journal->getPrimaryLocale());
                                 }
-				$institution = trim(explode(";", explode("Institución:", $affiliation)[1])[0]);
-				$dependencia = trim(explode(";", explode("Dependencia:", $affiliation)[1])[0]);
-				$estado = trim(explode(";", explode("Estado:", $affiliation)[1])[0]);
-				$ciudad = trim(explode(";", explode("Ciudad:", $affiliation)[1])[0]);
+				$institution = '';
+				$exp_ins = explode("Institución:", $affiliation);
+				if( isset($exp_ins[1]) )
+					$institution = trim(explode(";", $exp_ins[1])[0]);
+				
+				$dependencia = '';
+				$exp_dep = explode("Dependencia:", $affiliation);
+				if( isset($exp_dep[1]) )
+					$dependencia = trim(explode(";", $exp_dep[1])[0]);
+				
+				$estado = '';
+				$exp_estado = explode("Estado:", $affiliation);
+				if( isset($exp_estado[1]) )
+					$estado = trim(explode(";", $exp_estado[1])[0]);
+				
+				$ciudad = '';
+				$exp_ciudad = explode("Ciudad:", $affiliation);
+				if( isset($exp_ciudad[1]) )
+					$ciudad = trim(explode(";", $exp_ciudad[1])[0]);
+				
 				$country = $pais[$author->getCountry()];
 				$ciudad_estado = null;
 				if ($ciudad or $estado){
@@ -440,7 +479,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		$anio = trim(explode(")", explode("(", $ident)[1])[0]);
 		array_push($art_ident, array('vol' => $volumen, 'num' => $numero, 'anio' => $anio));
 		
-                $issue = PKPString::html2text($record->getData('issue')->getDescription('es_ES'));
+		$issue = PKPString::html2text($record->getData('issue')->getDescription('es_ES'));
                 if(strlen($issue) == 0){
                     $issue = PKPString::html2text($record->getData('issue')->getDescription($article->getLocale()));
                 }
@@ -449,11 +488,23 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
                 }
                 
 		$art_issue = array();
-		$month = strtolower(trim(explode(";", explode("Mes:", $issue)[1])[0]));
-		$part = trim(explode(";", explode("Parte:", $issue)[1])[0]);
-		array_push($art_issue, array('mes' => $meses[$month], 'parte' => $part));
+		$month='';
+		$exp_month = explode("Mes:", $issue);
+		if( isset($exp_month[1]) )
+			$month = strtolower(trim(explode(";", $exp_month[1])[0]));
 		
-                $types = $article->getType('es_ES');
+		$part = '';
+		$exp_part = explode("Parte:", $issue);
+		if( isset($exp_part[1]) )
+			$part = trim(explode(";", $exp_part[1])[0]);
+		
+		$mes = '';
+		if( isset($meses[$month]) )
+			$mes = $meses[$month];
+		
+		array_push($art_issue, array('mes' => $mes, 'parte' => $part));
+		
+		$types = $article->getType('es_ES');
                 if(strlen($types) == 0){
                     $types = $article->getType($article->getLocale());
                 }
@@ -461,8 +512,16 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
                     $types = $article->getType($journal->getPrimaryLocale());
                 }
 		$art_type = array();
-		$type = trim(explode(";", explode("Tipo:", $types)[1])[0]);
-		$focus = trim(explode(";", explode("Enfoque:", $types)[1])[0]);
+		$type = '';
+		$exp_type = explode("Tipo:", $types);
+		if( isset($exp_type[1]) )
+			$type = trim(explode(";", $exp_type[1])[0]);
+		
+		$focus = '';
+		$exp_focus = explode("Enfoque:", $types);
+		if( isset($exp_focus[1]) )
+			$focus = trim(explode(";", $exp_focus[1])[0]);
+		
 		array_push($art_type, array('type' => $type, 'focus' => $focus));
 
 		$templateMgr = TemplateManager::getManager();
@@ -482,7 +541,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 			'section' => $record->getData('section'),
                         'ident' => $ident,
                         'affiliation'=>$affiliation,
-                        'prueba_c' => $prueba
+                        'prueba_c' => ''
 		));
 
 		$subjects = array_merge_recursive(
@@ -491,6 +550,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		);
 		
 		$abstractLan = array();
+		$abstractO = array();
 		if ($article->getAbstract('es_ES')){
 			array_push($abstractLan, $idiomas[AppLocale::get3LetterIsoFromLocale('es_ES')]);
 		}
@@ -506,27 +566,26 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		}
                 
                 $title = [];
-                $title[0] = $article->getTitle('es_ES');
-                $title[1] = $article->getTitle('en_US');
-                $title[2] = $article->getTitle('pt_BR');
-                $title[3] = $article->getTitle('it_IT');
-                $title[4] = $article->getTitle('fr_FR');
-
+                $title['es_ES'] = $article->getCurrentPublication()->getData('title', 'es_ES');
+                $title['en_US'] = $article->getCurrentPublication()->getData('title', 'en_US');
+                $title['pt_BR'] = $article->getCurrentPublication()->getData('title', 'pt_BR');
+                $title['it_IT'] = $article->getCurrentPublication()->getData('title', 'it_IT');
+                $title['fr_FR'] = $article->getCurrentPublication()->getData('title', 'fr_FR');
+                    
 		$templateMgr->assign(array(
 			'subject' => isset($subjects[$journal->getPrimaryLocale()])?$subjects[$journal->getPrimaryLocale()]:'',
 			'abstract' => PKPString::html2text($article->getAbstract('es_ES')),
 			'abstractUS' => PKPString::html2text($article->getAbstract('en_US')),
-                        'abstractPT' => PKPString::html2text($article->getAbstract('pt_BR')),
-                        'abstractO' => $abstractO,
+			'abstractPT' => PKPString::html2text($article->getAbstract('pt_BR')),
+			'abstractO' => $abstractO,
 			'abstractLan' => $abstractLan,
-                        'prueba' => AppLocale::get3LetterIsoFromLocale($article->getLocale()),
 			'language' => $idiomas[AppLocale::get3LetterIsoFromLocale($article->getLocale())],
 			'languages' => $journal->getSupportedFormLocaleNames(),
-                        'version' => explode("</release>",explode("<release>",$version)[1])[0],
-                        'title' => $title,//,
-						'records' => $this->records,
-                    'error' => $msjError
-			//'languages' => $journal->getSupportedSubmissionLocaleNames()
+			'version' => explode("</release>",explode("<release>",$version)[1])[0],
+			'title' => $title,
+			'records' => $this->records,
+                        'error' => $this->msjError,
+                        'min' => $this->min
 		));
 	
 		$plugin = PluginRegistry::getPlugin('oaiMetadataFormats', 'OAIFormatPlugin_BIBLAT');
@@ -535,4 +594,4 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 	}
 }
 
-?>
+

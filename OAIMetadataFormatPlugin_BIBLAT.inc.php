@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/oaiMetadataFormats/marc/OAIMetadataFormatPlugin_BIBLAT.inc.php
+ * @file plugins/oaiMetadataFormats/biblat/OAIMetadataFormatPlugin_BIBLAT.inc.php
  *
  * Copyright (c) 2021 UNAM-DGBSDI
  * Copyright (c) 2021 Edgar Durán
@@ -29,7 +29,7 @@ class OAIMetadataFormatPlugin_BIBLAT extends OAIMetadataFormatPlugin {
 
 	function getDisplayName() {
 		$name = 'Formato BIBLAT de Metadatos v2.0';
-		if (strpos(__('plugins.OAIMetadata.biblat.displayName'), '##') === false)
+		if (strpos(__('plugins.oaiMetadata.biblat.displayName'), '##') === false)
 			return __('plugins.OAIMetadata.biblat.displayName');
 		else
 			return $name;
@@ -56,8 +56,8 @@ class OAIMetadataFormatPlugin_BIBLAT extends OAIMetadataFormatPlugin {
 	}
 
 	static function getNamespace() {
-		return 'oai_biblat_312v20';
+		return 'oai_biblat_320v20';
 	}
 }
 
-?>
+
