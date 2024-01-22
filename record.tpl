@@ -10,18 +10,16 @@
 <oai_biblat status="c" type="a" level="m" encLvl="3" catForm="u"
 	xmlns="oai_biblat" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="oai_biblat">
-        
 	{if $article->getDatePublished()}
 		<fixfield id="008">"{$article->getDatePublished()|strtotime|date_format:"%y%m%d %Y"}                        eng  "</fixfield>
 	{/if}
         
         {if $version}
         <varfield id="000" i1="#" i2="#">
-            <subfield label="i">2.4.0v2.0</subfield>
+            <subfield label="i">3.0.0v2.0</subfield>
             <subfield label="v">{$version}</subfield>
 	</varfield>
         {/if}
-        
 	<varfield id="008" i1="#" i2="#">
 		<subfield label="e">{$address|escape}</subfield>
 	</varfield>
@@ -37,7 +35,7 @@
 			<subfield label="a">{$article->getStoredPubId('doi')}</subfield>
 		</varfield>
 	{/if}
-
+	
 	{if $language}
 		<varfield id="041" i1="#" i2="#">
 			<subfield label="a">{$language}</subfield>
@@ -47,16 +45,20 @@
 	{assign var=authors value=$article->getAuthors()}
 	
 	{foreach from=$authors item=author key=key}
+		{if $author->getSuffix() == "AC"}
+
+		{else}
 			<varfield id="100" i1="#" i2="#">
 				<subfield label="a">{$author->getFullName(true)|escape}</subfield>
 				{**assign var=affiliation value=$author->getAffiliation($journal->getPrimaryLocale())**}				
 				{if $author->getEmail()}<subfield label="6">{$author->getEmail()|escape}</subfield>{/if}
 				{if $author->getUrl()}<subfield label="0">{$author->getUrl()|escape}</subfield>{/if}
 				{if $author->getData('orcid')}<subfield label="0">{$author->getData('orcid')|escape}</subfield>{/if}
+				{if $author->getSuffix()}<subfield label="0">{$author->getSuffix()|escape}</subfield>{/if}
 				{if strlen($affiliation) != 0 or strlen($art_authors[$key].country) != 0}
 					<varfield id="120" i1="#" i2="#">
-						{if strlen($art_authors[$key].institution) == 0} {/if}
-								{if $affiliation} <subfield label="u">{$affiliation|escape}</subfield>
+						{if strlen($art_authors[$key].institution) == 0}
+								{if $affiliation} <subfield label="u">{$affiliation|escape}</subfield>{/if}
 								{if $art_authors[$key].country} <subfield label="x">{$art_authors[$key].country|escape}</subfield> {/if}
 						{* elseif $art_authors[$key].institution or $art_authors[$key].dependencia or $art_authors[$key].ciudad or $art_authors[$key].country *}
 						{else}
@@ -68,6 +70,7 @@
 					</varfield>
 				{/if}
 			</varfield>
+		{/if}
 	{/foreach}
 	
 	{foreach name=art_author from=$art_authors_ac item=auth}
@@ -78,7 +81,7 @@
 			</varfield>
 	{/foreach}
 	
-	{assign var=journal_name value=$journal->getTitle($journal->getPrimaryLocale())}
+	{assign var=journal_name value=$journal->getName($journal->getPrimaryLocale())}
 	{if $journal->getSetting('publisherInstitution')}
 		{assign var=publisher value=$journal->getSetting('publisherInstitution')}
 	{/if}
@@ -171,30 +174,37 @@
 		</varfield>
 	{/if}
 	
-	{if $disciplines[0]}
+	{if $disciplines}
 		<varfield id="650" i1="#" i2="#">
 			<subfield label="a">
-			{foreach name=disciplines from=$disciplines item=discipline}
-                                {$discipline|escape}{if !$smarty.foreach.disciplines.last}, {/if}
+			{foreach from=$disciplines item=discipline}
+				{foreach name=disciplines from=$discipline item=disciplineItem}
+					{$disciplineItem|escape}{if !$smarty.foreach.disciplines.last}, {/if}
+				{/foreach}
 			{/foreach}
 			</subfield>
 		</varfield>
 	{/if}
 	
-	{if $keywords[0]}
+	{if $keywords}
 		<varfield id="653" i1="#" i2="#">
 			<subfield label="a">
-			{foreach name=kwds from=$keywords item=keyword}
-                            {$keyword|escape}{if !$smarty.foreach.kwds.last}, {/if}
+			{foreach from=$keywords item=keyword}
+				{foreach name=keywords from=$keyword item=keywordItem}
+					{$keywordItem|escape}{if !$smarty.foreach.keywords.last}, {/if}
+				{/foreach}
 			{/foreach}
 			</subfield>
 		</varfield>
 	{/if}
-	{if $keywordsUS[0]}
+	
+	{if $keywordsUS}
 		<varfield id="654" i1="#" i2="#">			
 			<subfield label="a">
-			{foreach name=kwds from=$keywordsUS item=keyword}
-				{$keyword|escape}{if !$smarty.foreach.kwds.last}, {/if}
+			{foreach from=$keywordsUS item=keyword}
+				{foreach name=keywords from=$keyword item=keywordItem}
+					{$keywordItem|escape}{if !$smarty.foreach.keywords.last}, {/if}
+				{/foreach}
 			{/foreach}
 			</subfield>
 		</varfield>
@@ -209,9 +219,10 @@
 	{foreach from=$article->getGalleys() item=galley}
 		<varfield id="856" i1=" " i2=" ">
 			<subfield label="q">{$galley->getFileType()|escape}</subfield>
-			<subfield label="u">{url journal=$journal->getPath() page="article" op="view" path=$article->getBestArticleId()|escape}/{$galley->getGalleyId()}</subfield>
+			<subfield label="u">{url journal=$journal->getPath() page="article" op="view" path=$article->getBestArticleId()|escape}/{$galley->getBestGalleyId()}</subfield>
 		</varfield>
 	{/foreach}
+	
 	{if $records}
 		<varfield id="db" i1="#" i2="#">
 			{foreach from=$records item=record key=key}
@@ -219,12 +230,17 @@
 			{/foreach}
 		</varfield>
     {/if}
-        
-	
-        {*
+
 	{if $article->getCoverage($journal->getPrimaryLocale())}
 		<varfield id="500" i1=" " i2=" ">
 			<subfield label="a">{$article->getCoverage($journal->getPrimaryLocale())|escape}</subfield>
 		</varfield>
-	{/if}*}
+	{/if}
+        
+        {if $error}
+            <varfield id="err" i1=" " i2=" ">
+            {$error}
+            </varfield>
+        {/if} 
+
 </oai_biblat>

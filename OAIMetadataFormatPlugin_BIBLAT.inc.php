@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file plugins/oaiMetadataFormats/marc/OAIMetadataFormatPlugin_MARC.inc.php
+ * @file plugins/oaiMetadataFormats/biblat/OAIMetadataFormatPlugin_BIBLAT.inc.php
  *
  * Copyright (c) 2021 UNAM-DGBSDI
  * Copyright (c) 2021 Edgar Durán
@@ -11,7 +11,7 @@
  * @ingroup oai_format
  * @see OAI
  *
- * @brief marc metadata format plugin for OAI.
+ * @brief biblat metadata format plugin for OAI.
  */
 
 import('lib.pkp.classes.plugins.OAIMetadataFormatPlugin');
@@ -47,16 +47,16 @@ class OAIMetadataFormatPlugin_BIBLAT extends OAIMetadataFormatPlugin {
 		return 'OAIMetadataFormat_BIBLAT';
 	}
 
-	function getMetadataPrefix() {
+	static function getMetadataPrefix() {
 		return 'oai_biblat';
 	}
 
-	function getSchema() {
+	static function getSchema() {
 		return 'https://biblat.unam.mx';
 	}
 
-	function getNamespace() {
-		return 'oai_biblat_240v20';
+	static function getNamespace() {
+		return 'oai_biblat_300v20';
 	}
 }
 
