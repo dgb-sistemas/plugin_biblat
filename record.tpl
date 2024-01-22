@@ -17,7 +17,7 @@
         
         {if $version}
         <varfield id="000" i1="#" i2="#">
-            <subfield label="i">2.3.0v2.0</subfield>
+            <subfield label="i">2.4.0v2.0</subfield>
             <subfield label="v">{$version}</subfield>
 	</varfield>
         {/if}
@@ -31,10 +31,10 @@
 			<subfield label="b">{$journal->getSetting('onlineIssn')|escape}</subfield>
 		</varfield>
 	{/if}
-
-	{if $id}
+	
+	{if $article->getStoredPubId('doi')}
 		<varfield id="024" i1="#" i2="#">
-			<subfield label="a">{$id}</subfield>
+			<subfield label="a">{$article->getStoredPubId('doi')}</subfield>
 		</varfield>
 	{/if}
 
@@ -55,8 +55,8 @@
 				{if $author->getData('orcid')}<subfield label="0">{$author->getData('orcid')|escape}</subfield>{/if}
 				{if strlen($affiliation) != 0 or strlen($art_authors[$key].country) != 0}
 					<varfield id="120" i1="#" i2="#">
-						{if strlen($art_authors[$key].institution) == 0}
-								{if $affiliation} <subfield label="u">{$affiliation|escape}</subfield>{/if}
+						{if strlen($art_authors[$key].institution) == 0} {/if}
+								{if $affiliation} <subfield label="u">{$affiliation|escape}</subfield>
 								{if $art_authors[$key].country} <subfield label="x">{$art_authors[$key].country|escape}</subfield> {/if}
 						{* elseif $art_authors[$key].institution or $art_authors[$key].dependencia or $art_authors[$key].ciudad or $art_authors[$key].country *}
 						{else}
@@ -86,12 +86,6 @@
 	{if $journal_name} 
 		<varfield id="222" i1="#" i2="#">
 			<subfield label="a">{$journal_name|escape}</subfield>
-		</varfield>
-	{/if}
-	
-	{if $titleJSON}
-		<varfield id="24X" i1="#" i2="#">
-			<subfield label="bib1">{$titleJSON|escape}</subfield>
 		</varfield>
 	{/if}
 	
@@ -133,7 +127,7 @@
 			<subfield label="a">{$title[2]|escape}</subfield>
 		</varfield>
 	{/if}
-
+	
 	{if $publisher or $art_ident[0].anio}
 		<varfield id="260" i1="#" i2="#">
 			{if $publisher} <subfield label="b">{$publisher}</subfield> {/if}
@@ -141,25 +135,22 @@
 		</varfield>
 	{/if}
 	
-	{if $art_ident[0].vol or $art_ident[0].num or $art_ident[0].mes or $art_ident[0].parte or $article->getPages() or $ident}
+	{if $art_ident[0].vol or $art_ident[0].num or $art_ident[0].mes or $art_ident[0].parte or $article->getPages()}
 		<varfield id="300" i1="#" i2="#">
 			{if $art_ident[0].vol} <subfield label="a">V{$art_ident[0].vol|escape}</subfield> {/if}
 			{if $art_ident[0].num} <subfield label="b">N{$art_ident[0].num|escape}</subfield> {/if}
 			{if $art_issue[0].mes} <subfield label="c">{$art_issue[0].mes|escape}</subfield> {/if}
 			{if $art_issue[0].parte} <subfield label="d">{$art_issue[0].parte|escape}</subfield> {/if}
 			{if $article->getPages()} <subfield label="e">P{$article->getPages()|escape}</subfield> {/if}
-			{if $ident} <subfield label="bib1">{$ident}</subfield> {/if}
-			{if $issue_description} <subfield label="bib2">{$issue_description}</subfield> {/if}
 		</varfield>
 	{/if}
 	
-	{if $abstract or $abstractUS or $abstractPT or $abstractO or $abstractJSON}
+	{if $abstract or $abstractUS or $abstractPT or $abstractO}
 		<varfield id="520" i1="#" i2="#">		
 			{if $abstract} <subfield label="a">{$abstract|escape}</subfield> {/if}
                         {if $abstractPT} <subfield label="p">{$abstractPT|escape}</subfield> {/if}
 			{if $abstractUS} <subfield label="i">{$abstractUS|escape}</subfield> {/if}
                         {if $abstractO} <subfield label="o">{$abstractO|escape}</subfield> {/if}
-			{if $abstractJSON} <subfield label="bib1">{$abstractJSON|escape}</subfield> {/if}
 		</varfield>
 	{/if}
 	
@@ -173,43 +164,39 @@
 		</varfield>
 	{/if}
 	
-	{if $art_type[0].type or $art_type[0].focus or $types}
+	{if $art_type[0].type or $art_type[0].focus}
 		<varfield id="590" i1="#" i2="#">
 			{if $art_type[0].type} <subfield label="a">{$art_type[0].type|escape}</subfield> {/if}
 			{if $art_type[0].focus} <subfield label="b">{$art_type[0].focus|escape}</subfield> {/if}
-			{if $types} <subfield label="bib1">{$types|escape}</subfield> {/if}
 		</varfield>
 	{/if}
 	
-	{if $disciplines[0] or $disciplinesJSON}
+	{if $disciplines[0]}
 		<varfield id="650" i1="#" i2="#">
 			<subfield label="a">
 			{foreach name=disciplines from=$disciplines item=discipline}
                                 {$discipline|escape}{if !$smarty.foreach.disciplines.last}, {/if}
 			{/foreach}
 			</subfield>
-			{if $disciplinesJSON} <subfield label="bib1">{$disciplinesJSON|escape}</subfield> {/if}
 		</varfield>
 	{/if}
 	
-	{if $keywords[0] or $keywordsJSON}
+	{if $keywords[0]}
 		<varfield id="653" i1="#" i2="#">
 			<subfield label="a">
 			{foreach name=kwds from=$keywords item=keyword}
                             {$keyword|escape}{if !$smarty.foreach.kwds.last}, {/if}
 			{/foreach}
 			</subfield>
-			{if $keywordsJSON}<subfield label="bib1">{$keywordsJSON}</subfield>{/if}
 		</varfield>
 	{/if}
-	{if $keywordsUS[0] or $keywordsUSJSON}
+	{if $keywordsUS[0]}
 		<varfield id="654" i1="#" i2="#">			
 			<subfield label="a">
 			{foreach name=kwds from=$keywordsUS item=keyword}
 				{$keyword|escape}{if !$smarty.foreach.kwds.last}, {/if}
 			{/foreach}
 			</subfield>
-			{if $keywordsUSJSON}<subfield label="bib1">{$keywordsUSJSON}</subfield>{/if}
 		</varfield>
 	{/if}
 	
@@ -222,25 +209,22 @@
 	{foreach from=$article->getGalleys() item=galley}
 		<varfield id="856" i1=" " i2=" ">
 			<subfield label="q">{$galley->getFileType()|escape}</subfield>
-			<subfield label="u">{url journal=$journal->getPath() page="article" op="view" path=$article->getBestArticleId()|escape}/{$galley->getGalleyId()|escape}</subfield>
+			<subfield label="u">{url journal=$journal->getPath() page="article" op="view" path=$article->getBestArticleId()|escape}/{$galley->getGalleyId()}</subfield>
 		</varfield>
 	{/foreach}
-
-	{if $min}
-        	<varfield id="min" i1="#" i2="#">
-            		{$min}
-		</varfield>
-        {/if}
 	{if $records}
 		<varfield id="db" i1="#" i2="#">
 			{foreach from=$records item=record key=key}
 				<subfield label="{$record.tabla}">{$record.rows}</subfield>
 			{/foreach}
 		</varfield>
-        {/if}
-	{if $error}
-        	<varfield id="err" i1="#" i2="#">
-            		<subfield label="e">{$error}</subfield>
+    {/if}
+        
+	
+        {*
+	{if $article->getCoverage($journal->getPrimaryLocale())}
+		<varfield id="500" i1=" " i2=" ">
+			<subfield label="a">{$article->getCoverage($journal->getPrimaryLocale())|escape}</subfield>
 		</varfield>
-        {/if}
+	{/if}*}
 </oai_biblat>

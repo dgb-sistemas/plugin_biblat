@@ -14,7 +14,7 @@
  * @brief marc metadata format plugin for OAI.
  */
 
-import('classes.plugins.OAIMetadataFormatPlugin');
+import('lib.pkp.classes.plugins.OAIMetadataFormatPlugin');
 
 class OAIMetadataFormatPlugin_BIBLAT extends OAIMetadataFormatPlugin {
 
@@ -29,16 +29,16 @@ class OAIMetadataFormatPlugin_BIBLAT extends OAIMetadataFormatPlugin {
 
 	function getDisplayName() {
 		$name = 'Formato BIBLAT de Metadatos v2.0';
-		if (strpos(Locale::translate('plugins.oaiMetadata.biblat.displayName'), '##') === false)
-			return Locale::translate('plugins.oaiMetadata.biblat.displayName');
+		if (strpos(__('plugins.oaiMetadata.biblat.displayName'), '##') === false)
+			return __('plugins.OAIMetadata.biblat.displayName');
 		else
 			return $name;
 	}
 
 	function getDescription() {
 		$description = 'Estructura los metadatos de forma que son consistentes con el formato BIBLAT.';
-                if (strpos(Locale::translate('plugins.oaiMetadata.biblat.description'), '##') === false)
-			return Locale::translate('plugins.oaiMetadata.biblat.description');
+                if (strpos(__('plugins.OAIMetadata.biblat.description'), '##') === false)
+			return __('plugins.OAIMetadata.biblat.description');
 		else
 			return $description;
 	}
@@ -56,7 +56,7 @@ class OAIMetadataFormatPlugin_BIBLAT extends OAIMetadataFormatPlugin {
 	}
 
 	function getNamespace() {
-		return 'oai_biblat_230v20';
+		return 'oai_biblat_240v20';
 	}
 }
 
