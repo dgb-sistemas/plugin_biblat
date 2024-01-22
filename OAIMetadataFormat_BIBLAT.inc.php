@@ -324,7 +324,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 					$this->msjError .= $e->getMessage();
 					//Error posible tabla en postgres
 					if($tabla == 'issues'){
-						$where_p = " where COALESCE(year, YEAR(date_published)) in (".$this->years.") and journal_id = ".$sel_journal_id." ";
+						$where_p = " where (extract(year from date_published) in (".$this->years.") or year in (".$this->years.")) and journal_id = ".$sel_journal_id." ";
 						$rows = $this->get_json($tabla, $where_p);
 					}else{
 						$rows = [];
@@ -336,7 +336,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 				} catch (Exception $e) {
 					$this->msjError .= $e->getMessage();
 					if($tabla == 'issues'){
-						$where_p = " where COALESCE(year, YEAR(date_published)) in (".$this->years.") and journal_id = ".$sel_journal_id." ";
+						$where_p = " where (extract(year from date_published) in (".$this->years.") or year in (".$this->years.")) and journal_id = ".$sel_journal_id." ";
 						$rows = $this->get_json($tabla, $where_p);
 					}else{
 						$rows = [];
@@ -362,40 +362,40 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		$as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array('es_ES')));
 		
 		$keywords = array();
-		if( !is_null($as1) ){							 
-			if( array_shift($as1) )
-				$keywords = $submissionKeywordDao->getKeywords($article->getId(), array('es_ES'));
-		}
-        if(!isset($keywords)){
-			$as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale())));
-			if( !is_null($as1) ){							 
-				if( array_shift($as1) )
-					$keywords = $submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale()));
-			}
-        }
+                if( !is_null($as1) ){
+                    if( array_shift($as1) )
+                        $keywords = $submissionKeywordDao->getKeywords($article->getId(), array('es_ES'));
+                }
+                if(!isset($keywords)){
+                    $as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale())));
+                    if( !is_null($as1) ){
+                        if( array_shift($as1) )
+                            $keywords = $submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale()));
+                    }
+                }
 		
 		$keywordsUS = array();
 		$as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array('en_US')));
-		if( !is_null($as1) ){							 
-			if( array_shift($as1) )
-				$keywordsUS = $submissionKeywordDao->getKeywords($article->getId(), array('en_US'));
-		}
+                if( !is_null($as1) ){
+                    if( array_shift($as1) )
+			$keywordsUS = $submissionKeywordDao->getKeywords($article->getId(), array('en_US'));
+                }
 		
 		$submissionDisciplineDao = DAORegistry::getDAO('SubmissionDisciplineDAO');
 		
 		$disciplines = array();
 		$as1 = array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES')));
-		if( !is_null($as1) ){
-			if( array_shift($as1) )
-				$disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES'));
-		}
-        if(!isset($disciplines)){
-			$as1 = array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale())));
-			if( !is_null($as1) ){
-				if( array_shift($as1) )
-					$disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale()));
-			}
-        }
+                if( !is_null($as1) ){
+                    if( array_shift($as1) )
+			$disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES'));
+                }
+                if(!isset($disciplines)){
+                    $as1 = array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale())));
+                    if( !is_null($as1) ){
+                        if( array_shift($as1) )
+                            $disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale()));
+                    }
+                }
 		
 		$pais = DAORegistry::getDAO('CountryDAO')->getCountries();
                 
