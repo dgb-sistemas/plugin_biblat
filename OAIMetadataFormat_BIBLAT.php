@@ -3,8 +3,8 @@
 /**
  * @file plugins/oaiMetadataFormats/biblat/OAIMetadataFormat_BIBLAT.inc.php
  *
- * Copyright (c) 2021 UNAM-DGBSDI
- * Copyright (c) 2021 Edgar Durán
+ * Copyright (c) 2023 UNAM-DGBSDI
+ * Copyright (c) 2023 Edgar Durán
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
  * @class OAIMetadataFormat_BIBLAT
@@ -13,9 +13,18 @@
  *
  * @brief OAI metadata format class -- BIBLAT.
  */
-//error_reporting(E_ALL);
-error_reporting(0);
-class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
+
+namespace APP\plugins\oaiMetadataFormats\biblat;
+
+use APP\template\TemplateManager;
+use PKP\core\PKPString;
+use PKP\i18n\LocaleConversion;
+use PKP\oai\OAIMetadataFormat;
+use PKP\plugins\PluginRegistry;
+use PKP\db\DAORegistry;
+
+class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat
+{
 	public $records = null;
 	public $issues = null;
 	public $msjError = '';
@@ -324,7 +333,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 					$this->msjError .= $e->getMessage();
 					//Error posible tabla en postgres
 					if($tabla == 'issues'){
-						$where_p = " where (extract(year from date_published) in (".$this->years.") or year in (".$this->years.")) and journal_id = ".$sel_journal_id." ";
+						$where_p = " where COALESCE(year, YEAR(date_published)) in (".$this->years.") and journal_id = ".$sel_journal_id." ";
 						$rows = $this->get_json($tabla, $where_p);
 					}else{
 						$rows = [];
@@ -336,7 +345,7 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 				} catch (Exception $e) {
 					$this->msjError .= $e->getMessage();
 					if($tabla == 'issues'){
-						$where_p = " where (extract(year from date_published) in (".$this->years.") or year in (".$this->years.")) and journal_id = ".$sel_journal_id." ";
+						$where_p = " where COALESCE(year, YEAR(date_published)) in (".$this->years.") and journal_id = ".$sel_journal_id." ";
 						$rows = $this->get_json($tabla, $where_p);
 					}else{
 						$rows = [];
@@ -348,249 +357,42 @@ class OAIMetadataFormat_BIBLAT extends OAIMetadataFormat {
 		}
 		return $result_tablas;
 	}
-
-	/**
-	 * @see OAIMetadataFormat#toXml
-	 */
-	function toXml($record, $format = null) {
-		$article = $record->getData('article');
-		$journal = $record->getData('journal');
-                
-                $version= file_get_contents("dbscripts/xml/version.xml");
-		
-		$submissionKeywordDao = DAORegistry::getDAO('SubmissionKeywordDAO');
-		$as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array('es_ES')));
-		
-		$keywords = array();
-                if( !is_null($as1) ){
-                    if( array_shift($as1) )
-                        $keywords = $submissionKeywordDao->getKeywords($article->getId(), array('es_ES'));
-                }
-                if(!isset($keywords)){
-                    $as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale())));
-                    if( !is_null($as1) ){
-                        if( array_shift($as1) )
-                            $keywords = $submissionKeywordDao->getKeywords($article->getId(), array($article->getLocale()));
-                    }
-                }
-		
-		$keywordsUS = array();
-		$as1 = array_shift($submissionKeywordDao->getKeywords($article->getId(), array('en_US')));
-                if( !is_null($as1) ){
-                    if( array_shift($as1) )
-			$keywordsUS = $submissionKeywordDao->getKeywords($article->getId(), array('en_US'));
-                }
-		
-		$submissionDisciplineDao = DAORegistry::getDAO('SubmissionDisciplineDAO');
-		
-		$disciplines = array();
-		$as1 = array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES')));
-                if( !is_null($as1) ){
-                    if( array_shift($as1) )
-			$disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array('es_ES'));
-                }
-                if(!isset($disciplines)){
-                    $as1 = array_shift($submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale())));
-                    if( !is_null($as1) ){
-                        if( array_shift($as1) )
-                            $disciplines = $submissionDisciplineDao->getDisciplines($article->getId(), array($article->getLocale()));
-                    }
-                }
-		
-		$pais = DAORegistry::getDAO('CountryDAO')->getCountries();
-                
-		$meses = array(	'enero' => 'ene', 'febrero' => 'feb', 'marzo' => 'mar', 'abril' => 'abr', 'mayo' => 'may', 'junio' => 'jun',
-						'julio' => 'jul', 'agosto' => 'ago', 'septiembre' => 'sep', 'octubre' => 'oct', 'noviembre' => 'nov', 'diciembre' => 'dic'
-		);
-		$idiomas = array('spa' => 'Español', 'eng' => 'Inglés', 'es' => 'Español', 'en' => 'Inglés', 'ita' => 'Italiano', 'fra' => 'Francés', 'por' => 'Portugués');
-		
-		$address = '';
-		$exp_pais = explode("País:", $journal->getSetting('mailingAddress'));
-		if( isset($exp_pais[1]) )
-			$address = trim(explode(";", explode("País:", $journal->getSetting('mailingAddress'))[1])[0]);
-		
-		$art_authors_ac = array();
-		$art_authors = array();
-		$authors = $article->getAuthors();
-		foreach ($authors as $author){
-			//if ($author->getSuffix() == "AC"){
-			//		$affiliation = $author->getAffiliation($journal->getPrimaryLocale());
-			//	$institution = trim(explode(";", explode("Institución:", $affiliation)[1])[0]);
-			//	$dependencia = trim(explode(";", explode("Dependencia:", $affiliation)[1])[0]);
-			//	$country = $pais[$author->getCountry()];
-			//	array_push($art_authors_ac, array('institution' => $institution, 'dependencia' => $dependencia, 'country' => $country));
-			//}else{
-				$affiliation = $author->getAffiliation('es_ES');
-                                if(strlen($affiliation) == 0){
-                                    $affiliation = $author->getAffiliation($article->getLocale());
-                                }
-                                if(strlen($affiliation) == 0){
-                                    $affiliation = $author->getAffiliation($journal->getPrimaryLocale());
-                                }
-				$institution = '';
-				$exp_ins = explode("Institución:", $affiliation);
-				if( isset($exp_ins[1]) )
-					$institution = trim(explode(";", $exp_ins[1])[0]);
-				
-				$dependencia = '';
-				$exp_dep = explode("Dependencia:", $affiliation);
-				if( isset($exp_dep[1]) )
-					$dependencia = trim(explode(";", $exp_dep[1])[0]);
-				
-				$estado = '';
-				$exp_estado = explode("Estado:", $affiliation);
-				if( isset($exp_estado[1]) )
-					$estado = trim(explode(";", $exp_estado[1])[0]);
-				
-				$ciudad = '';
-				$exp_ciudad = explode("Ciudad:", $affiliation);
-				if( isset($exp_ciudad[1]) )
-					$ciudad = trim(explode(";", $exp_ciudad[1])[0]);
-				
-				$country = $pais[$author->getCountry()];
-				$ciudad_estado = null;
-				if ($ciudad or $estado){
-					$ciudad_estado = $estado . ', ' . $ciudad;
-				}
-				array_push($art_authors, array('institution' => $institution, 'dependencia' => $dependencia, 'ciudad' => $ciudad_estado, 'country' => $country));
-			//}
-		}
-		
-		$ident = $record->getData('issue')->getIssueIdentification();
-		$art_ident = array();
-                //volúmen idioma español
-                $volumen = trim(explode("Núm.", explode("Vol.", $ident)[1])[0]);
-                //volúmen idioma portugués
-                if($volumen == "")
-                    $volumen = trim(explode("n.", explode("v.", $ident)[1])[0]);
-                //volúmen idioma inglés
-                if($volumen == "")
-                    $volumen = trim(explode("No", explode("Vol", $ident)[1])[0]);
-                //numero idioma español
-		$numero = trim(explode("(", explode("Núm.", $ident)[1])[0]);
-                //numero idioma portugués
-                if($numero == "")
-                    $numero = trim(explode("(", explode("n.", $ident)[1])[0]);
-                //numero idioma inglés
-                if($numero == "")
-                    $numero = trim(explode("(", explode("No", $ident)[1])[0]);
-                
-		$anio = trim(explode(")", explode("(", $ident)[1])[0]);
-		array_push($art_ident, array('vol' => $volumen, 'num' => $numero, 'anio' => $anio));
-		
-		$issue = PKPString::html2text($record->getData('issue')->getDescription('es_ES'));
-                if(strlen($issue) == 0){
-                    $issue = PKPString::html2text($record->getData('issue')->getDescription($article->getLocale()));
-                }
-                if(strlen($issue) == 0){
-                    $issue = PKPString::html2text($record->getData('issue')->getDescription($journal->getPrimaryLocale()));
-                }
-                
-		$art_issue = array();
-		$month='';
-		$exp_month = explode("Mes:", $issue);
-		if( isset($exp_month[1]) )
-			$month = strtolower(trim(explode(";", $exp_month[1])[0]));
-		
-		$part = '';
-		$exp_part = explode("Parte:", $issue);
-		if( isset($exp_part[1]) )
-			$part = trim(explode(";", $exp_part[1])[0]);
-		
-		$mes = '';
-		if( isset($meses[$month]) )
-			$mes = $meses[$month];
-		
-		array_push($art_issue, array('mes' => $mes, 'parte' => $part));
-		
-		$types = $article->getType('es_ES');
-                if(strlen($types) == 0){
-                    $types = $article->getType($article->getLocale());
-                }
-                if(strlen($types) == 0){
-                    $types = $article->getType($journal->getPrimaryLocale());
-                }
-		$art_type = array();
-		$type = '';
-		$exp_type = explode("Tipo:", $types);
-		if( isset($exp_type[1]) )
-			$type = trim(explode(";", $exp_type[1])[0]);
-		
-		$focus = '';
-		$exp_focus = explode("Enfoque:", $types);
-		if( isset($exp_focus[1]) )
-			$focus = trim(explode(";", $exp_focus[1])[0]);
-		
-		array_push($art_type, array('type' => $type, 'focus' => $focus));
-
-		$templateMgr = TemplateManager::getManager();
-		$templateMgr->assign(array(
-			'journal' => $journal,
-			'article' => $article,
-			'address' => $address,
-			'art_authors_ac' => $art_authors_ac,
-			'art_authors' => $art_authors,
-			'art_issue' => $art_issue,
-			'art_ident' => $art_ident,
-			'art_type' => $art_type,
-			'keywords' => $keywords,
-			'keywordsUS' => $keywordsUS,
-			'disciplines' => $disciplines,
-			'issue' => $record->getData('issue'),
-			'section' => $record->getData('section'),
-                        'ident' => $ident,
-                        'affiliation'=>$affiliation,
-                        'prueba_c' => ''
-		));
-
-		$subjects = array_merge_recursive(
-			stripAssocArray((array) $article->getDiscipline(null)),
-			stripAssocArray((array) $article->getSubject(null))
-		);
-		
-		$abstractLan = array();
-		$abstractO = array();
-		if ($article->getAbstract('es_ES')){
-			array_push($abstractLan, $idiomas[AppLocale::get3LetterIsoFromLocale('es_ES')]);
-		}
-                if ($article->getAbstract('pt_BR')){
-			array_push($abstractLan, $idiomas[AppLocale::get3LetterIsoFromLocale('pt_BR')]);
-		}
-                if ($article->getAbstract('en_US')){
-			array_push($abstractLan, $idiomas[AppLocale::get3LetterIsoFromLocale('en_US')]);
-		}
-                if ($article->getLocale() <> 'en_US' and $article->getLocale() <> 'pt_BR' and $article->getLocale() <> 'es_ES'){
-			array_push($abstractLan, $idiomas[AppLocale::get3LetterIsoFromLocale($article->getLocale())]);
-                        $abstractO = PKPString::html2text($article->getAbstract($article->getLocale()));
-		}
-                
-                $title = [];
-                $title['es_ES'] = $article->getCurrentPublication()->getData('title', 'es_ES');
-                $title['en_US'] = $article->getCurrentPublication()->getData('title', 'en_US');
-                $title['pt_BR'] = $article->getCurrentPublication()->getData('title', 'pt_BR');
-                $title['it_IT'] = $article->getCurrentPublication()->getData('title', 'it_IT');
-                $title['fr_FR'] = $article->getCurrentPublication()->getData('title', 'fr_FR');
-                    
-		$templateMgr->assign(array(
-			'subject' => isset($subjects[$journal->getPrimaryLocale()])?$subjects[$journal->getPrimaryLocale()]:'',
-			'abstract' => PKPString::html2text($article->getAbstract('es_ES')),
-			'abstractUS' => PKPString::html2text($article->getAbstract('en_US')),
-			'abstractPT' => PKPString::html2text($article->getAbstract('pt_BR')),
-			'abstractO' => $abstractO,
-			'abstractLan' => $abstractLan,
-			'language' => $idiomas[AppLocale::get3LetterIsoFromLocale($article->getLocale())],
-			'languages' => $journal->getSupportedFormLocaleNames(),
-			'version' => explode("</release>",explode("<release>",$version)[1])[0],
-			'title' => $title,
-			'records' => $this->records,
-                        'error' => $this->msjError,
-                        'min' => $this->min
-		));
 	
-		$plugin = PluginRegistry::getPlugin('oaiMetadataFormats', 'OAIFormatPlugin_BIBLAT');
-		return $templateMgr->fetch($plugin->getTemplateResource('record.tpl'));
+    /**
+     * @see OAIMetadataFormat#toXml
+     *
+     * @param null|mixed $format
+     */
+    public function toXml($record, $format = null)
+    {
+        $article = $record->getData('article');
+        $journal = $record->getData('journal');
+		
+		$version= file_get_contents("dbscripts/xml/version.xml");
 
-	}
+        $templateMgr = TemplateManager::getManager();
+        $templateMgr->assign([
+            'journal' => $journal,
+            'article' => $article,
+            'issue' => $record->getData('issue'),
+            'section' => $record->getData('section'),
+			'version' => explode("</release>",explode("<release>",$version)[1])[0],
+			'records' => $this->records,
+			'error' => $this->msjError
+        ]);
+
+        $subjects = array_merge_recursive(
+            stripAssocArray((array) $article->getDiscipline(null)),
+            stripAssocArray((array) $article->getSubject(null))
+        );
+
+        $templateMgr->assign([
+            'subject' => isset($subjects[$journal->getPrimaryLocale()]) ? $subjects[$journal->getPrimaryLocale()] : '',
+            'abstract' => PKPString::html2text($article->getAbstract($article->getLocale())),
+            'language' => LocaleConversion::get3LetterIsoFromLocale($article->getLocale())
+        ]);
+
+        $plugin = PluginRegistry::getPlugin('oaiMetadataFormats', 'OAIFormatPlugin_BIBLAT');
+        return $templateMgr->fetch($plugin->getTemplateResource('record.tpl'));
+    }
 }
-
-
